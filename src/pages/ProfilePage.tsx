@@ -1,41 +1,48 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { User, Mail, Phone, Shield, Key, Bell } from "lucide-react";
+import { User as UserIcon, Mail, Phone, Shield, Key, Bell, ShieldCheck } from "lucide-react";
+import { getUser } from "@/lib/api";
 
 interface ProfilePageProps {
   role: "patient" | "doctor" | "admin";
 }
 
-const profileData = {
-  patient: { name: "Sarah Mitchell", email: "sarah.mitchell@mail.com", phone: "+1 (555) 234-5678", joined: "January 2025", mfa: true },
-  doctor: { name: "Dr. Rachel Kim", email: "dr.kim@hospital.org", phone: "+1 (555) 876-5432", joined: "March 2024", mfa: true },
-  admin: { name: "System Admin", email: "admin@securehealth.ai", phone: "+1 (555) 000-0001", joined: "January 2024", mfa: true },
-};
-
 const ProfilePage = ({ role }: ProfilePageProps) => {
-  const data = profileData[role];
+  const user = getUser();
+  
+  if (!user) {
+      return (
+        <DashboardLayout role={role}>
+           <p>Loading profile...</p>
+        </DashboardLayout>
+      )
+  }
+
   return (
     <DashboardLayout role={role}>
       <div className="max-w-2xl mx-auto space-y-6">
         <ScrollReveal>
-          <div className="glass rounded-xl p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold font-display mx-auto">
-              {data.name.split(" ").map(n => n[0]).join("")}
+          <div className="glass rounded-xl p-8 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary/20 to-accent/20 z-0"></div>
+            <div className="w-24 h-24 rounded-full bg-background flex items-center justify-center text-primary text-3xl font-bold font-display mx-auto relative z-10 border-4 border-background shadow-md">
+              {user.name.split(" ").map((n: string) => n[0]).join("")}
             </div>
-            <h2 className="font-display text-xl font-bold text-foreground mt-4">{data.name}</h2>
-            <p className="text-sm text-muted-foreground capitalize">{role} · Joined {data.joined}</p>
+            <h2 className="font-display text-2xl font-bold text-foreground mt-4 relative z-10">{role === 'doctor' && !user.name.startsWith('Dr') ? `Dr. ${user.name}` : user.name}</h2>
+            <div className="text-sm text-muted-foreground capitalize mt-1 relative z-10 flex items-center justify-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure {role} Account
+            </div>
           </div>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
           <div className="glass rounded-xl p-6 space-y-4">
-            <h3 className="font-display font-semibold text-foreground">Personal Information</h3>
+            <h3 className="font-display font-semibold text-foreground">Account Information</h3>
             {[
-              { icon: Mail, label: "Email", value: data.email },
-              { icon: Phone, label: "Phone", value: data.phone },
-              { icon: User, label: "Role", value: role.charAt(0).toUpperCase() + role.slice(1) },
+              { icon: Mail, label: "Registered Email", value: user.email },
+              { icon: UserIcon, label: "Account Role", value: role.charAt(0).toUpperCase() + role.slice(1) },
+              { icon: Phone, label: "Status", value: "Active User" },
             ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <item.icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">{item.label}</span>

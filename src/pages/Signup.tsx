@@ -1,14 +1,33 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { apiFetch } from "../lib/api";
+import { useToast } from "@/components/ui/use-toast";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [role, setRole] = useState<"patient" | "doctor" | "admin">("patient");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/${role}`);
+    setLoading(true);
+    try {
+      await apiFetch("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password, role }),
+      });
+      toast({ title: "Account Created", description: "You can now login!" });
+      navigate("/login");
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Signup Failed", description: error.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,21 +48,42 @@ const Signup = () => {
               <label className="text-sm font-medium text-foreground mb-1.5 block">Full Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input type="text" placeholder="Enter your full name" className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" />
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name" 
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" 
+                  required
+                />
               </div>
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input type="email" placeholder="Enter your email" className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" />
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email" 
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" 
+                  required
+                />
               </div>
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input type="password" placeholder="Create a password" className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" />
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password" 
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-muted/50 border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" 
+                  required
+                />
               </div>
             </div>
 
@@ -62,11 +102,11 @@ const Signup = () => {
                     {r}
                   </button>
                 ))}
-              </div>
+            </div>
             </div>
 
-            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-xl font-display font-semibold hover:opacity-90 transition-all active:scale-[0.97] glow-teal-sm">
-              Create Account <ArrowRight className="h-4 w-4" />
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-xl font-display font-semibold hover:opacity-90 transition-all active:scale-[0.97] glow-teal-sm disabled:opacity-50">
+              {loading ? "Creating..." : <>Create Account <ArrowRight className="h-4 w-4" /></>}
             </button>
           </form>
 

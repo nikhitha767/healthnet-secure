@@ -4,6 +4,8 @@ import {
   Users, Activity, Calendar, Upload, AlertTriangle, ClipboardList, Heart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUser, removeAuthToken, removeUser } from "@/lib/api";
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,7 +43,21 @@ const roleColors = { patient: "text-primary", doctor: "text-accent", admin: "tex
 export const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const items = navItems[role];
+  const items = navItems[role] || [];
+  
+  // Redirect to login if not authenticated
+  const user = getUser();
+  if (!user) {
+      window.location.href = "/login";
+      return null;
+  }
+
+  // Add a hard stop: if a user with 'patient' token tries to view 'doctor' pages, redirect to their own dashboard
+  if (user && user.role !== role && user.role !== 'admin') {
+      window.location.href = `/${user.role}`;
+      return null;
+  }
+
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -83,7 +99,7 @@ export const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           <Link to={`/${role}/settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <Settings className="h-4 w-4" /> Settings
           </Link>
-          <button onClick={() => navigate("/")} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors w-full active:scale-[0.98]">
+          <button onClick={() => { removeAuthToken(); removeUser(); navigate("/login"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors w-full active:scale-[0.98]">
             <LogOut className="h-4 w-4" /> Logout
           </button>
         </div>
@@ -104,11 +120,11 @@ export const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-                {role === "patient" ? "SM" : role === "doctor" ? "RK" : "AD"}
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold uppercase">
+                {getUser()?.name?.charAt(0) || "U"}
               </div>
               <span className="text-sm font-medium text-foreground hidden md:inline">
-                {role === "patient" ? "Sarah Mitchell" : role === "doctor" ? "Dr. Rachel Kim" : "System Admin"}
+                {getUser()?.role === 'doctor' && !getUser()?.name.startsWith('Dr') ? `Dr. ${getUser()?.name}` : getUser()?.name || "User"}
               </span>
             </div>
           </div>

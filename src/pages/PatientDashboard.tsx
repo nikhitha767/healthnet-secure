@@ -1,99 +1,111 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
-import { StatusBadge } from "@/components/StatusBadge";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { Calendar, FileText, Bell, Shield, MessageSquare, Activity } from "lucide-react";
-import { appointments, reports, notifications } from "@/data/dummyData";
+import { Calendar, FileText, Bell, Shield, MessageSquare, Activity, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { apiFetch, getUser } from "@/lib/api";
 
-const PatientDashboard = () => (
-  <DashboardLayout role="patient">
-    <div className="space-y-6">
-      <ScrollReveal>
-        <h2 className="text-2xl font-display font-bold text-foreground">Welcome back, Sarah</h2>
-        <p className="text-muted-foreground text-sm mt-1">Here's your health overview for today.</p>
-      </ScrollReveal>
+const PatientDashboard = () => {
+  const [reports, setReports] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const user = getUser();
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ScrollReveal delay={0}><StatCard title="Upcoming Appointments" value={3} icon={<Calendar className="h-5 w-5" />} /></ScrollReveal>
-        <ScrollReveal delay={80}><StatCard title="Medical Reports" value={12} icon={<FileText className="h-5 w-5" />} trend="2 new this week" trendUp /></ScrollReveal>
-        <ScrollReveal delay={160}><StatCard title="Unread Messages" value={4} icon={<MessageSquare className="h-5 w-5" />} /></ScrollReveal>
-        <ScrollReveal delay={240}><StatCard title="Security Score" value="A+" icon={<Shield className="h-5 w-5" />} glowing /></ScrollReveal>
-      </div>
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [reportsData, notifsData] = await Promise.all([
+          apiFetch('/patient/reports'),
+          apiFetch('/patient/notifications')
+        ]);
+        setReports(reportsData);
+        setNotifications(notifsData);
+      } catch (err) {
+        console.error("Error fetching patient dashboard data", err);
+      }
+    };
+    fetchData();
+  }, []);
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <ScrollReveal delay={100}>
-          <div className="glass rounded-xl p-6">
-            <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" /> Upcoming Appointments
-            </h3>
-            <div className="space-y-3">
-              {appointments.slice(0, 3).map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{apt.doctor}</p>
-                    <p className="text-xs text-muted-foreground">{apt.date} · {apt.time}</p>
-                  </div>
-                  <StatusBadge status={apt.status} />
-                </div>
-              ))}
-            </div>
-          </div>
+  const getIcon = (type: string) => {
+      if (type === 'success') return <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />;
+      if (type === 'error') return <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />;
+      if (type === 'warning') return <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />;
+      return <Info className="h-4 w-4 text-blue-500 mt-0.5" />;
+  }
+
+  return (
+    <DashboardLayout role="patient">
+      <div className="space-y-6">
+        <ScrollReveal>
+          <h2 className="text-2xl font-display font-bold text-foreground">Welcome back, {user?.name || 'Patient'}</h2>
+          <p className="text-muted-foreground text-sm mt-1">Here's your health summary data directly from the system.</p>
         </ScrollReveal>
 
-        <ScrollReveal delay={200}>
-          <div className="glass rounded-xl p-6">
-            <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Bell className="h-4 w-4 text-primary" /> Recent Notifications
-            </h3>
-            <div className="space-y-3">
-              {notifications.map((n) => (
-                <div key={n.id} className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${n.read ? "bg-muted/20" : "bg-primary/5 border border-primary/10"}`}>
-                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.read ? "bg-muted-foreground" : "bg-primary"}`} />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{n.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </ScrollReveal>
-      </div>
-
-      <ScrollReveal delay={100}>
-        <div className="glass rounded-xl p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" /> Recent Reports
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Report</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Type</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Date</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Doctor</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((r) => (
-                  <tr key={r.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-2 text-foreground font-medium">{r.title}</td>
-                    <td className="py-3 px-2 text-muted-foreground">{r.type}</td>
-                    <td className="py-3 px-2 text-muted-foreground tabular-nums">{r.date}</td>
-                    <td className="py-3 px-2 text-muted-foreground">{r.doctor}</td>
-                    <td className="py-3 px-2"><StatusBadge status={r.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ScrollReveal delay={0}><StatCard title="Medical Reports" value={reports.length} icon={<FileText className="h-5 w-5" />} /></ScrollReveal>
+          <ScrollReveal delay={80}><StatCard title="Notifications" value={notifications.length} icon={<Bell className="h-5 w-5" />} /></ScrollReveal>
+          <ScrollReveal delay={160}><StatCard title="Messages" value={"Encrypted"} icon={<MessageSquare className="h-5 w-5" />} /></ScrollReveal>
+          <ScrollReveal delay={240}><StatCard title="Security Status" value="Secured" icon={<Shield className="h-5 w-5" />} glowing /></ScrollReveal>
         </div>
-      </ScrollReveal>
-    </div>
-  </DashboardLayout>
-);
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ScrollReveal delay={100}>
+            <div className="glass rounded-xl p-6 h-full border border-border/50 bg-gradient-to-br from-background to-muted/20">
+              <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" /> Active Notifications
+              </h3>
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4 text-center">No notifications at the moment.</p>
+                ) : notifications.slice(0, 4).map((n) => (
+                  <div key={n.id} className="flex items-start gap-3 p-4 rounded-xl transition-all border border-border/50 bg-surface/50 hover:bg-muted/50 cursor-default shadow-sm hover:shadow-md">
+                    {getIcon(n.type)}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                         <p className="text-sm font-semibold text-foreground leading-tight">{n.title}</p>
+                         <p className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap ml-2">{new Date(n.timestamp).toLocaleDateString()}</p>
+                      </div>
+                      <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">{n.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={200}>
+            <div className="glass rounded-xl p-6 h-full border border-border/50 bg-gradient-to-br from-background to-muted/20">
+              <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" /> Recent Reports
+              </h3>
+              <div className="overflow-x-auto">
+                {reports.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4 text-center">No reports available. Please upload a report.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-2 text-muted-foreground font-medium">Report</th>
+                        <th className="text-left py-3 px-2 text-muted-foreground font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports.map((r) => (
+                        <tr key={r.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                          <td className="py-3 px-2 text-foreground font-medium">{r.report_name}</td>
+                          <td className="py-3 px-2 text-muted-foreground tabular-nums">{new Date(r.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+};
 
 export default PatientDashboard;
