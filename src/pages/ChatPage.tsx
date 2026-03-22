@@ -75,7 +75,11 @@ const ChatPage = ({ role }: ChatPageProps) => {
           method: 'POST',
           body: JSON.stringify(bodyPayload)
       });
+      // Refresh to get accurate ID and timestamp from DB
+      await fetchMessages();
     } catch (err: any) {
+      // Revert optimistic update on failure
+      setMessages(prev => prev.filter(m => m.id !== newMsg.id));
       toast({ variant: "destructive", title: "Message Failed", description: err.message });
     }
   };
@@ -147,7 +151,7 @@ const ChatPage = ({ role }: ChatPageProps) => {
                         <span>Messages are secured with AES-256 encryption</span>
                     </div>
                     {messages.length === 0 ? <p className="text-center text-xs text-muted-foreground mt-10">No messages yet. Say hello!</p> : messages.map((msg: any) => {
-                    const isMe = msg.sender_id === currentUser.id;
+                    const isMe = String(msg.sender_id) === String(currentUser?.id);
                     return (
                         <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${

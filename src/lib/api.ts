@@ -35,6 +35,13 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
   const data = await response.json();
   if (!response.ok) {
+    if (response.status === 401) {
+      removeAuthToken();
+      removeUser();
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
     throw new Error(data.message || 'API request failed');
   }
 

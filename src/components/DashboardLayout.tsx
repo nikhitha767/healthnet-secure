@@ -115,10 +115,6 @@ export const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors active:scale-95">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </button>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold uppercase">
                 {getUser()?.name?.charAt(0) || "U"}
