@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+// Automatically use the live Render backend if no local environment variable is provided
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://healthnet-secure-2.onrender.com/api';
 
 export const getAuthToken = () => localStorage.getItem('token');
 export const setAuthToken = (token: string) => localStorage.setItem('token', token);
